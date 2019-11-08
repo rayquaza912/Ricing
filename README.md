@@ -1,5 +1,4 @@
 # GnuPG Messages Manager
-========================
 
 
 #### Gpg-messages-manager is an interactive bash script that lets you manage messages and recipients for use with GnuPG. It uses FZF as a dependency. Here are the available options :
