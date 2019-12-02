@@ -11,7 +11,7 @@
 
 gpgDir=$HOME/Documents/pgp
 editor=vim
-fzf="fzf --height 65% --layout=reverse --border"
+fzf="fzf --height 30% --layout=reverse --border"
 
 # Text format
 bs=$(tput bold)
@@ -111,17 +111,6 @@ function askOption() {
 	cut -d ' ' -f1 |
 	grep -oE '[0-9]+'
 	)
-
-	if [ ! -z $choice ]; then
-		if [ $choice -eq $choice 2>/dev/null ]; then
-			while [[ $choice -lt 0 || $choice -gt 9 ]]; do
-				echo -e "\nPlease choose between 0 - 9 !"
-				read -p ">>> " choice
-			done
-		fi
-	else
-		exit 0
-	fi
 
 	case $choice in
 		0)
