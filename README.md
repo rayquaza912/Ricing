@@ -6,10 +6,13 @@
 * Show GPG keyring
 * Generate a new key pair
 * Import a public key
+* Export a public key
 * Remove a public key
 * Encrypt your address
 * Encrypt a message
 * Decrypt a message
+* Sign a file
+* Verify a file
 
 The architecture of your `gpgDir` must match this tree in order to make the utility working.
 ```
