@@ -11,7 +11,7 @@
 
 gpgDir=$HOME/Documents/pgp
 editor=vim
-fzf="fzf --height 30% --layout=reverse --border"
+fzf="fzf --height 65% --layout=reverse --border"
 
 # Text format
 bs=$(tput bold)
@@ -91,44 +91,47 @@ function setAddr() {
 function showMenu() {
 	clear
 	echo "${bs}Welcome to GnuPG !${be}"
-	echo "
-[1] Show keyring
-[2] Generate a new public key
-[3] Import a public key
-[4] Remove a public key
-[5] Encrypt your address
-[6] Encrypt a message
-[7] Decrypt a message
-
-[0] Exit"
-
 	askOption
 }
 
 function askOption() {
 
-	echo; read -p ">>> " choice
+	choice=$(echo -e "[0] Show keyring
+[1] Generate a new key pair
+[2] Import a public key
+[3] Export a public key
+[4] Remove a public key
+[5] Encrypt your address
+[6] Encrypt a message
+[7] Decrypt a message
+[8] Sign a file
+[9] Verify a file
+[!] Exit" |
+	$fzf |
+	cut -d ' ' -f1 |
+	grep -oE '[0-9]+'
+	)
 
 	if [ ! -z $choice ]; then
 		if [ $choice -eq $choice 2>/dev/null ]; then
-			while [[ $choice -lt 0 || $choice -gt 7 ]]; do
-				echo -e "\nPlease choose between 1 - 7 !"
+			while [[ $choice -lt 0 || $choice -gt 9 ]]; do
+				echo -e "\nPlease choose between 0 - 9 !"
 				read -p ">>> " choice
 			done
 		fi
 	else
-		showMenu
+		exit 0
 	fi
 
 	case $choice in
 		0)
-			exit;;
-		1)
 			showKeys "i";;
-		2)
+		1)
 			genKey;;
-		3)
+		2)
 			addPubKey;;
+		3)
+			exportPubKey;;
 		4)
 			delPubKey;;
 		5)
@@ -137,6 +140,10 @@ function askOption() {
 			encryptMsg;;
 		7)
 			decryptMsg;;
+		8)
+			signFile;;
+		9)
+			verifyFile;;
 	esac
 }
 
@@ -188,10 +195,11 @@ function addPubKey() {
 
 	if [ $? -eq 0 ]; then
 		echo -e "${green}\nPublic key $public added !${end}"
-		toMenu
 	else
-		echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
+		echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log.${end}"
 	fi
+
+	toMenu
 }
 
 function delPubKey() {
@@ -201,10 +209,11 @@ function delPubKey() {
 
 	if [ $? -eq 0 ]; then
 		echo -e "${green}Public key $public deleted !${end}"
-		toMenu
 	else
 		echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
 	fi
+
+	toMenu
 }
 
 function encryptMsg() {
@@ -218,6 +227,7 @@ function encryptMsg() {
 		if [ $? -eq 0 ]; then
 			recipientFormat=$(echo -n 'adr_for_'; echo $recipient | sed 's/@.\+$//')
 			mv txt/adr.txt.asc asc/$recipientFormat.asc
+
 			echo -e "\n${green}Address encrypted for ${bs}${recipient}${be}\nto $gpgDir/asc/${bs}$recipientFormat.asc${be} !${end}"
 		else
 			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
@@ -231,24 +241,25 @@ function encryptMsg() {
 			recipientFormat=$(echo -n 'msg_for_'; echo -n $recipient | sed 's/@.\+$/_/'; date +%Y%m%d_%H%M%S)
 			mv txt/tmp.txt.asc asc/$recipientFormat.asc
 			rm txt/tmp.txt
+
 			echo -e "\n${green}Message encrypted for ${bs}${recipient}${be}\nto $gpgDir/asc/${bs}$recipientFormat.asc${be} !${end}"
 		else
 			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
 		fi
 	fi
 
+	echo 'RELOADAGENT' | gpg-connect-agent
 	toMenu
 }
 
 function decryptMsg() {
 	cd $gpgDir
-	messages=$(ls asc/ | grep '^msg' | head)
+	messages=$(ls asc/ | grep '^msg' | head -n99)
 	echo "Please select a message : "
 	toDecryptMsg=$(echo -e "$messages" | $fzf)
 	gpg --output txt/$toDecryptMsg.txt --decrypt asc/$toDecryptMsg
 
 	if [ $? -eq 0 ]; then
-		echo RELOADAGENT | gpg-connect-agent
 		echo -e "\n${green}Message successfully decrypted to $gpgDir/txt/${bs}$toDecryptMsg.txt${be} !${end}"
 		echo -e "\nWould you like to see the message now ?\n[Y]es / [N]o\n"
 		read -p ">>> " answerMsg
@@ -265,6 +276,55 @@ function decryptMsg() {
 		echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
 	fi
 
+	echo 'RELOADAGENT' | gpg-connect-agent
+	toMenu
+}
+
+function exportPubKey() {
+	cd $gpgDir
+	echo -e "\nPlease select a public key : "
+	public=$(selectKey)
+	pubFormat=$(echo -n $public | sed 's/@.\+$/_/' | sed 's/\./_/g'; echo 'pub.asc')
+	gpg -ao pub/${pubFormat} --export ${public}
+
+	if [ $? -eq 0 ]; then
+		echo -e "\n${green}Public key successfully exported to $gpgDir/pub/${bs}${pubFormat}${be} !${end}"
+	else
+		echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log.${end}"
+	fi
+
+	echo RELOADAGENT | gpg-connect-agent
+	toMenu
+}
+
+function signFile() {
+	cd $gpgDir
+	echo -e "\nPlease select a file : "
+	file=$(ls asc/ txt/ | sed '/.*\/:/d' | sed '/^$/d' | head -n99 | $fzf)
+	gpg --armor --output sig/${file}.sig --detach-sig $(find | grep $file | tail -n1)
+
+	if [ $? -eq 0 ]; then
+		echo -e "\n${green}File successfully signed to $gpgDir/sig/${bs}${file}.sig${be} !${end}"
+	else
+		echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log.${end}"
+	fi
+
+	echo RELOADAGENT | gpg-connect-agent
+	toMenu
+}
+
+function verifyFile() {
+	cd $gpgDir
+	echo -e "\nPlease select a file : "
+	signature=$(ls sig/ | $fzf)
+	fileSign=$(find asc/ txt/ | grep $(echo $signature | sed 's/\.sig$//'))
+	gpg --verify sig/${signature} ${fileSign}
+
+	if [ $? -ne 0 ]; then
+		exit 1
+	fi
+
+	echo RELOADAGENT | gpg-connect-agent
 	toMenu
 }
 
