@@ -81,9 +81,10 @@ function checkAddr() {
 }
 
 function setAddr() {
+	cd $gpgDir
 	echo -e "You firstly need to specify your address."
 	read -p "Press Enter to enter your address..." foo
-	$editor $gpgDir/txt/adr.txt
+	$editor txt/adr.txt
 	checkAddr
 }
 
@@ -167,6 +168,7 @@ function selectKey() {
 
 function genKey() {
 	gpgVersion=$(gpg --version | sed 1q | cut -d ' ' -f3)
+
 	if [ $(echo -e "2.2.17\n${gpgVersion}" | sort -V | head -n1) == "2.2.17" ]; then
 		# GPG version is greather than 2.2.17
 		gpg --full-generate-key
