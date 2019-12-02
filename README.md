@@ -25,6 +25,10 @@ The architecture of your `gpgDir` must match this tree in order to make the util
 │   ├── polandteam_pub.asc
 │   ├── grenouille_rouge.asc
 │   └── madeingermany_pub.asc
+├── sig
+│   ├── adr_for_antoine_rayquaza.asc.sig
+│   ├── adr.txt.sig
+│   └── msg_for_aurleien.txt.sig
 └── txt
     ├── adr.txt
     ├── msg_for_antoine_20191015_203924.asc.txt
@@ -33,8 +37,9 @@ The architecture of your `gpgDir` must match this tree in order to make the util
 ```
 
 By default, it refers to `~/Documents/pgp/`, where
-* `asc` is your encrypted files folder, such as addresses or messages in plain ASCII PGP.
+* `asc` is your encrypted files folder, it contains addresses or messages in plain ASCII PGP.
 * `pub` is where you put your recipients public key.
+* `sig` is your signed files folder.
 * `txt` is your decrypted messages folder. It also contains your plain addresse text.
 
 Here is the common output when you launch the script :
@@ -42,15 +47,18 @@ Here is the common output when you launch the script :
 ```
 Welcome to GnuPG !
 
-[1] Show keyring
-[2] Generate a new public key
-[3] Import a public key
+[0] Show keyring
+[1] Generate a new public key
+[2] Import a public key
+[3] Export a public key
 [4] Remove a public key
-[5] Encrypt your address
+[5] Encrypt your addresse
 [6] Encrypt a message
 [7] Decrypt a message
+[8] Sign a file
+[9] Verify a file
 
-[0] Exit
+[!] Exit
 
 >>>
 
