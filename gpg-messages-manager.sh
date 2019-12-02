@@ -11,6 +11,7 @@
 
 gpgDir=$HOME/Documents/pgp
 editor=vim
+fzf="fzf --height 30% --layout=reverse --border"
 
 # Text format
 bs=$(tput bold)
@@ -22,23 +23,23 @@ green='\033[0;32m'
 end='\033[0m'
 
 function checkDependencies() {
-		dependencies=( gpg fzf $editor )
-		ready=0
+	dependencies=( gpg fzf $editor )
+	ready=0
 
-		for i in "${dependencies[@]}"; do
-				which $i > /dev/null
+	for i in "${dependencies[@]}"; do
+		which $i > /dev/null
 
-				if [ $? -ne 0 ]; then
-						ready=1
-						break
-				fi
-		done
-
-		if [ $ready -eq 0 ]; then
-				checkDirectories
-		else
-				exit 1
+		if [ $? -ne 0 ]; then
+			ready=1
+			break
 		fi
+	done
+
+	if [ $ready -eq 0 ]; then
+		checkDirectories
+	else
+		exit 1
+	fi
 }
 
 function checkDirectories() {
@@ -86,7 +87,7 @@ function toMenu() {
 }
 
 function selectKey() {
-	showKeys | fzf | cut -f4 -d $'\t'
+	showKeys | $fzf | cut -f4 -d $'\t'
 }
 
 function checkAddr() {
@@ -105,13 +106,13 @@ function checkAddr() {
 function setAddr() {
 	echo -e "You firstly need to specify your address."
 	read -p "Press Enter to enter your address..." foo
-	vim $gpgDir/txt/adr.txt
+	$editor $gpgDir/txt/adr.txt
 	checkAddr
 }
 
 function showMenu() {
 	clear
-	echo "${bs}Welcome to GnuPG !${be}"; echo
+	echo "${bs}Welcome to GnuPG !${be}"
 	echo "
 [1] Show keyring
 [2] Generate a new public key
@@ -121,15 +122,14 @@ function showMenu() {
 [6] Encrypt a message
 [7] Decrypt a message
 
-[0] Exit
-"
+[0] Exit"
+
 	askOption
 }
 
 function encryptMsg() {
-	showKeys
 	cd $gpgDir
-	echo; read -p "Press Enter to select a recipient..." foo
+	echo "Please select a recipient : "
 	recipient=$(selectKey)
 
 	if [ "$1" == "adr" ]; then
@@ -138,14 +138,13 @@ function encryptMsg() {
 		if [ $? -eq 0 ]; then
 			recipientFormat=$(echo -n 'adr_for_'; echo $recipient | sed 's/@.\+$//')
 			mv txt/adr.txt.asc asc/$recipientFormat.asc
-			echo -e "\n${green}Address encrypted for ${bs}${recipient}${be}\nto $gpgDir/asc/${bs}$recipientFormat.asc${be} !${end}\n"
+			echo -e "\n${green}Address encrypted for ${bs}${recipient}${be}\nto $gpgDir/asc/${bs}$recipientFormat.asc${be} !${end}"
 		else
 			echo -e "\n${red}Warning: An error occured. Please refer to gpg.log.${end}"
 		fi
 
 	else
-		echo; read -p "Press Enter to start writing your message..." foo
-		vim txt/tmp.txt
+		$editor txt/tmp.txt
 		gpg --trust-model always --armor --encrypt --recipient $recipient txt/tmp.txt
 
 		if [ $? -eq 0 ]; then
@@ -163,9 +162,8 @@ function encryptMsg() {
 
 function addPubKey() {
 	cd $gpgDir
-	echo; ls pub/ | head -n99
-	echo; read -p "Press Enter to select a public key..."
-	public=$(ls pub/ | head | fzf)
+	echo "Please select a public key : "
+	public=$(ls pub/ | head | $fzf)
 	gpg --batch --yes --import pub/$public
 
 	if [ $? -eq 0 ]; then
@@ -177,8 +175,7 @@ function addPubKey() {
 }
 
 function delPubKey() {
-	echo; showKeys
-	echo; read -p "Press Enter to select a public key..."
+	echo "Please select a public key : "
 	public=$(selectKey)
 	gpg --batch --yes --delete-key $public
 
@@ -206,9 +203,8 @@ function genKey() {
 function decryptMsg() {
 	cd $gpgDir
 	messages=$(ls asc/ | grep '^msg' | head)
-	echo -e "\n${messages}\n"
-	read -p "Press Enter to select a message..." foo
-	toDecryptMsg=$(echo -e "$messages" | fzf)
+	echo "Please select a message : "
+	toDecryptMsg=$(echo -e "$messages" | $fzf)
 	gpg --output txt/$toDecryptMsg.txt --decrypt asc/$toDecryptMsg
 
 	if [ $? -eq 0 ]; then
