@@ -10,3 +10,50 @@
 * Encrypt your address
 * Encrypt a message
 * Decrypt a message
+
+The architecture of your `gpgDir` must match this tree in order to make the utility working.
+
+```
+.
+├── asc
+│   ├── adr_for_antoine.rayquaza.asc
+│   ├── adr_for_aurelien.lelevier.asc
+│   ├── msg_for_antoine.rayquaza_20191015_182013.asc
+│   ├── msg_for_antoine.rayquaza_20191015_203924.asc
+│   ├── msg_for_aurelien.lelevier_20191023_013644.asc
+│   └── msg_for_aurelien.lelevier_20191202_013102.asc
+├── pub
+│   ├── frenchteam_pub.asc
+│   ├── grenouille_bleu_pub.asc
+│   └── madeinfrance_pub.asc
+└── txt
+    ├── adr.txt
+    ├── msg_for_antoine.rayquaza_20191015_203924.asc.txt
+    ├── msg_for_antoine.rayquaza_20191107_165132.asc.txt
+    └── msg_for_antoine.rayquaza_20191108_141425.asc.txt
+```
+
+By default, it refers to `~/Documents/pgp/`, where
+	* `asc` is your encrypted files folder, such as addresses or messages in plain ASCII PGP.
+	* `pub` is where you put yout recipients public key.
+	* `txt` is your decrypted messages folder. It also contains your plain addresse text.
+
+Here is the common output when you launch the script :
+
+```
+Welcome to GnuPG !
+
+[1] Show keyring
+[2] Generate a new public key
+[3] Import a public key
+[4] Remove a public key
+[5] Encrypt your address
+[6] Encrypt a message
+[7] Decrypt a message
+
+[0] Exit
+
+>>>
+
+```
+
