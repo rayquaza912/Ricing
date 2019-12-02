@@ -46,10 +46,10 @@ function checkDirectories() {
  	cd $HOME
 
  	if [ ! -d Documents ]; then
- 		mkdir -p Documents/pgp/{asc,pub,txt}
+ 		mkdir -p Documents/pgp/{asc,pub,txt,sig}
 
  	elif [ ! -d Documents/pgp ]; then
- 		mkdir -p Documents/pgp/{asc,pub,txt}
+ 		mkdir -p Documents/pgp/{asc,pub,txt,sig}
 
  	elif [ ! -d Documents/pgp/asc ]; then
  			mkdir Documents/pgp/asc
@@ -59,6 +59,8 @@ function checkDirectories() {
 
  	elif [ ! -d Documents/pgp/txt ]; then
  			mkdir Documents/pgp/txt
+	elif [ ! -d Documents/pgp/sig ]; then
+		mkdir Documents/pgp/sig
 
  	else
  		echo "All OK."
@@ -232,6 +234,8 @@ function encryptMsg() {
 			rm txt/tmp.txt
 
 			echo -e "\n${green}Message encrypted for ${bs}${recipient}${be}\nto $gpgDir/asc/${bs}$recipientFormat.asc${be} !${end}"
+
+			# Would you like to sign it ?
 		else
 			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
 		fi
