@@ -16,21 +16,21 @@ The architecture of your `gpgDir` must match this tree in order to make the util
 ```
 .
 ├── asc
-│   ├── adr_for_antoine.rayquaza.asc
-│   ├── adr_for_aurelien.lelevier.asc
-│   ├── msg_for_antoine.rayquaza_20191015_182013.asc
-│   ├── msg_for_antoine.rayquaza_20191015_203924.asc
-│   ├── msg_for_aurelien.lelevier_20191023_013644.asc
-│   └── msg_for_aurelien.lelevier_20191202_013102.asc
+│   ├── adr_for_antoine.asc
+│   ├── adr_for_aurelien.asc
+│   ├── msg_for_antoine_20191015_182013.asc
+│   ├── msg_for_antoine_20191015_203924.asc
+│   ├── msg_for_aurelien_20191023_013644.asc
+│   └── msg_for_aurelien_20191202_013102.asc
 ├── pub
-│   ├── frenchteam_pub.asc
-│   ├── grenouille_bleu_pub.asc
-│   └── madeinfrance_pub.asc
+│   ├── polandteam_pub.asc
+│   ├── grenouille_rouge.asc
+│   └── madeingermany_pub.asc
 └── txt
     ├── adr.txt
-    ├── msg_for_antoine.rayquaza_20191015_203924.asc.txt
-    ├── msg_for_antoine.rayquaza_20191107_165132.asc.txt
-    └── msg_for_antoine.rayquaza_20191108_141425.asc.txt
+    ├── msg_for_antoine_20191015_203924.asc.txt
+    ├── msg_for_antoine_20191107_165132.asc.txt
+    └── msg_for_antoine_20191108_141425.asc.txt
 ```
 
 By default, it refers to `~/Documents/pgp/`, where
