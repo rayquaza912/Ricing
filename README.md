@@ -12,7 +12,6 @@
 * Decrypt a message
 
 The architecture of your `gpgDir` must match this tree in order to make the utility working.
-
 ```
 .
 ├── asc
@@ -34,9 +33,9 @@ The architecture of your `gpgDir` must match this tree in order to make the util
 ```
 
 By default, it refers to `~/Documents/pgp/`, where
-	* `asc` is your encrypted files folder, such as addresses or messages in plain ASCII PGP.
-	* `pub` is where you put yout recipients public key.
-	* `txt` is your decrypted messages folder. It also contains your plain addresse text.
+* `asc` is your encrypted files folder, such as addresses or messages in plain ASCII PGP.
+* `pub` is where you put yout recipients public key.
+* `txt` is your decrypted messages folder. It also contains your plain addresse text.
 
 Here is the common output when you launch the script :
 
