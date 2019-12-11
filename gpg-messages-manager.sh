@@ -202,9 +202,16 @@ function addPubKey() {
 	if [ ! -z $public ]; then
 		gpg --batch --yes --import pub/$public
 		if [ $? -eq 0 ]; then
-			echo -e "${green}\nPublic key $public added !${end}"
+			echo -e "${green}\n\
+				Public key \
+				$public added !\
+				${end}"
 		else
-			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log.${end}"
+			echo -e "\n${red}\
+				Warning: \
+				An error occured. \
+				Please refer to the gpg error log.\
+				${end}"
 		fi
 	fi
 
@@ -218,9 +225,15 @@ function delPubKey() {
 
 	if [ ! -z $public ]; then
 		if [ $? -eq 0 ]; then
-			echo -e "${green}Public key $public deleted !${end}"
+			echo -e "${green}\
+				Public key \
+				$public deleted !\
+				${end}"
 		else
-			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
+			echo -e "\n${red}Warning: \
+				An error occured. \
+				Please refer to the gpg error log..\
+				${end}"
 		fi
 	fi
 
@@ -235,31 +248,66 @@ function encryptMsg() {
 	if [ ! -z $recipient ]; then
 
 		if [ "$1" == "adr" ]; then
-			gpg --trust-model always --armor --encrypt --recipient $recipient txt/adr.txt
+			gpg \
+				--trust-model always \
+				--armor \
+				--encrypt \
+				--recipient $recipient \
+				txt/adr.txt
 
 			if [ $? -eq 0 ]; then
-				recipientFormat=$(echo -n 'adr_for_'; echo $recipient | sed 's/@.\+$//')
+				recipientFormat=$(
+					echo -n 'adr_for_';
+					echo $recipient |
+					sed 's/@.\+$//'
+				)
+
 				mv txt/adr.txt.asc asc/$recipientFormat.asc
 
-				echo -e "\n${green}Address encrypted for ${bs}${recipient}${be}\nto $gpgDir/asc/${bs}$recipientFormat.asc${be} !${end}"
+				echo -e "\n${green}\
+					Address encrypted for \
+					${bs}${recipient}${be}\nto \
+					$gpgDir/asc/${bs}$recipientFormat.asc\
+					${be} !${end}"
 			else
-				echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
+				echo -e "\n${red}\
+					Warning: An error occured. \
+					Please refer to the gpg error log..\
+					${end}"
 			fi
 
 		else
 			$editor txt/tmp.txt
-			gpg --trust-model always --armor --encrypt --recipient $recipient txt/tmp.txt
+			gpg \
+				--trust-model always \
+				--armor \
+				--encrypt \
+				--recipient $recipient \
+				txt/tmp.txt
 
 			if [ $? -eq 0 ]; then
-				recipientFormat=$(echo -n 'msg_for_'; echo -n $recipient | sed 's/@.\+$/_/'; date +%Y%m%d_%H%M%S)
+				recipientFormat=$(
+					echo -n 'msg_for_';
+					echo -n $recipient |
+					sed 's/@.\+$/_/';
+					date +%Y%m%d_%H%M%S
+				)
+
 				mv txt/tmp.txt.asc asc/$recipientFormat.asc
 				rm txt/tmp.txt
 
-				echo -e "\n${green}Message encrypted for ${bs}${recipient}${be}\nto $gpgDir/asc/${bs}$recipientFormat.asc${be} !${end}"
+				echo -e "\n${green}\
+					Message encrypted for \
+					${bs}${recipient}${be}\nto \
+					$gpgDir/asc/${bs}$recipientFormat.asc\
+					${be} !${end}"
 
 				# Would you like to sign it ?
 			else
-				echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
+				echo -e "\n${red}\
+					Warning: An error occured. \
+					Please refer to the gpg error log..\
+					${end}"
 			fi
 		fi
 
@@ -277,23 +325,27 @@ function decryptMsg() {
 
 	if [ ! -z $toDecryptMsg ]; then
 
-		gpg --output txt/$toDecryptMsg.txt --decrypt asc/$toDecryptMsg
+		gpg \
+			--output txt/$toDecryptMsg.txt \
+			--decrypt asc/$toDecryptMsg
 
 		if [ $? -eq 0 ]; then
-			echo -e "\n${green}Message successfully decrypted to $gpgDir/txt/${bs}$toDecryptMsg.txt${be} !${end}"
-			echo -e "\nWould you like to see the message now ?\n[Y]es / [N]o\n"
-			read -p ">>> " answerMsg
+			echo -e "\n${green}\
+				Message successfully decrypted to \
+				$gpgDir/txt/${bs}$toDecryptMsg.txt\
+				${be} !${end}"
+			echo -e "\nWould you like to see the message now ?\n"
 
-			while [[ ! $answerMsg == "Y" && ! $answerMsg == "y" && ! $answerMsg == "N" && ! $answerMsg == "n" ]]; do
-				echo -e "\nPlease choose between Y or N !"
-				read -p ">>> " answerMsg
-			done
+			answerMsg=$(echo -e '[Y] Yes\n[N] No' | $fzf)
 
-			if [[ $answerMsg == "Y" || $answerMsg == "y" ]]; then
+			if [[ $answerMsg == "[Y] Yes" ]]; then
 				$editor txt/$toDecryptMsg.txt
 			fi
 		else
-			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log..${end}"
+			echo -e "\n${red}\
+				Warning: An error occured. \
+				Please refer to the gpg error log..\
+				${end}"
 		fi
 
 	fi
@@ -309,13 +361,21 @@ function exportPubKey() {
 
 	if [ ! -z $public ]; then
 
-		pubFormat=$(echo -n $public | sed 's/@.\+$/_/' | sed 's/\./_/g'; echo 'pub.asc')
+		pubFormat=$(echo -n $public |
+			sed 's/@.\+$/_/' |
+			sed 's/\./_/g'; echo 'pub.asc')
+
 		gpg -ao pub/${pubFormat} --export ${public}
 
 		if [ $? -eq 0 ]; then
-			echo -e "\n${green}Public key successfully exported to $gpgDir/pub/${bs}${pubFormat}${be} !${end}"
+			echo -e "\n${green}\
+				Public key successfully exported to \
+				$gpgDir/pub/${bs}${pubFormat}${be} !${end}"
 		else
-			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log.${end}"
+			echo -e "\n${red}Warning: \
+				An error occured. \
+				Please refer to the gpg error log.\
+				${end}"
 		fi
 
 	fi
@@ -327,16 +387,31 @@ function exportPubKey() {
 function signFile() {
 	cd $gpgDir
 	echo -e "\nPlease select a file to sign : "
-	file=$(ls asc/ txt/ | sed '/.*\/:/d' | sed '/^$/d' | head -n99 | $fzf)
+	file=$(ls asc/ txt/ |
+		sed '/.*\/:/d' |
+		sed '/^$/d' |
+		head -n99 |
+		$fzf)
 
 	if [ ! -z $file ]; then
 
-		gpg --armor --output sig/${file}.sig --detach-sig $(find | grep $file | tail -n1)
+		gpg \
+			--armor \
+			--output sig/${file}.sig \
+			--detach-sig $(find |
+				grep $file |
+				tail -n1)
 
 		if [ $? -eq 0 ]; then
-			echo -e "\n${green}File successfully signed to $gpgDir/sig/${bs}${file}.sig${be} !${end}"
+			echo -e "\n${green}\
+				File successfully signed to \
+				$gpgDir/sig/${bs}${file}.sig\
+				${be} !${end}"
 		else
-			echo -e "\n${red}Warning: An error occured. Please refer to the gpg error log.${end}"
+			echo -e "\n${red}Warning: \
+				An error occured. \
+				Please refer to the gpg error log.\
+				${end}"
 		fi
 
 	fi
@@ -352,7 +427,9 @@ function verifyFile() {
 
 	if [ ! -z $signature ]; then
 
-		fileSign=$(find asc/ txt/ | grep $(echo $signature | sed 's/\.sig$//'))
+		fileSign=$(find asc/ txt/ |
+			grep $(echo $signature | sed 's/\.sig$//'))
+
 		gpg --verify sig/${signature} ${fileSign}
 
 		if [ $? -ne 0 ]; then
