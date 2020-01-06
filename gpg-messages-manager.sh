@@ -59,6 +59,7 @@ function checkDirectories() {
 
  	elif [ ! -d Documents/pgp/txt ]; then
  			mkdir Documents/pgp/txt
+
 	elif [ ! -d Documents/pgp/sig ]; then
 		mkdir Documents/pgp/sig
 
@@ -104,7 +105,7 @@ function askOption() {
 		"Import a public key"
 		"Export a public key"
 		"Remove a public key"
-		"Encrypt your addresse"
+		"Encrypt your address"
 		"Encrypt a message"
 		"Decrypt a message"
 		"Sign a file"
@@ -182,10 +183,52 @@ function genKey() {
 	else
 
 		# GPG version is lower than 2.2.17
-		gpg --gen-key
+		gpg --default-new-key-algo rsa4096 --gen-key
 	fi
 
 	toMenu
+}
+
+function returnText() {
+
+	# Text block construction
+	text=(
+		# They all start with a newline
+		"\n"
+	)
+
+	if [ $? -ne 0 ]; then
+
+		# Generic error message
+		text+=(
+			"${red}"
+			"Warning: "
+			"An error occured. "
+			"Please refer to the gpg error log."
+			"${end}"
+		)
+
+	else
+
+		# Message on success
+		text+=(
+			"${green}"
+			"$@"
+			"${end}"
+		)
+	fi
+
+	# Print the whole text
+	for i in "${text[@]}"; do
+		echo -ne "$i"
+	done
+	echo -e "\n"
+
+	# Clear cached passphrases
+	echo 'RELOADAGENT' | gpg-connect-agent
+
+	toMenu
+
 }
 
 function addPubKey() {
@@ -200,22 +243,16 @@ function addPubKey() {
 	)
 
 	if [ ! -z $public ]; then
+
 		gpg --batch --yes --import pub/$public
-		if [ $? -eq 0 ]; then
-			echo -e "${green}\n\
-				Public key \
-				$public added !\
-				${end}"
-		else
-			echo -e "\n${red}\
-				Warning: \
-				An error occured. \
-				Please refer to the gpg error log.\
-				${end}"
-		fi
+
+		returnText \
+		 	"Public key " \
+		 	"${public} " \
+		 	"added !"
+
 	fi
 
-	toMenu
 }
 
 function delPubKey() {
@@ -224,23 +261,18 @@ function delPubKey() {
 	gpg --batch --yes --delete-key $public
 
 	if [ ! -z $public ]; then
-		if [ $? -eq 0 ]; then
-			echo -e "${green}\
-				Public key \
-				$public deleted !\
-				${end}"
-		else
-			echo -e "\n${red}Warning: \
-				An error occured. \
-				Please refer to the gpg error log..\
-				${end}"
-		fi
+
+		returnText \
+			"Public key " \
+			"${public} " \
+			"deleted !"
+
 	fi
 
-	toMenu
 }
 
 function encryptMsg() {
+
 	cd $gpgDir
 	echo "Please select a recipient : "
 	recipient=$(selectKey)
@@ -248,6 +280,14 @@ function encryptMsg() {
 	if [ ! -z $recipient ]; then
 
 		if [ "$1" == "adr" ]; then
+		# Encrypt address for recipient
+
+			recipientFormat=$(
+				echo -n 'adr_for_';
+				echo $recipient |
+				sed 's/@.\+$//'
+			)
+
 			gpg \
 				--trust-model always \
 				--armor \
@@ -255,28 +295,34 @@ function encryptMsg() {
 				--recipient $recipient \
 				txt/adr.txt
 
-			if [ $? -eq 0 ]; then
-				recipientFormat=$(
-					echo -n 'adr_for_';
-					echo $recipient |
-					sed 's/@.\+$//'
-				)
+			mv txt/adr.txt.asc asc/$recipientFormat.asc
 
-				mv txt/adr.txt.asc asc/$recipientFormat.asc
-
-				echo -e "\n${green}\
-					Address encrypted for \
-					${bs}${recipient}${be}\nto \
-					$gpgDir/asc/${bs}$recipientFormat.asc\
-					${be} !${end}"
-			else
-				echo -e "\n${red}\
-					Warning: An error occured. \
-					Please refer to the gpg error log..\
-					${end}"
-			fi
+			returnText \
+				"Address encrypted for " \
+				"${bs}" \
+				"${recipient}" \
+				"${be}" \
+				"\n" \
+				"to " \
+				"${gpgDir}" \
+				"/asc/" \
+				"${bs}" \
+				"${recipientFormat}" \
+				".asc " \
+				"${be}" \
+				"!" \
+				"${end}"
 
 		else
+			# Encrypt message for recipient
+
+			recipientFormat=$(
+				echo -n 'msg_for_';
+				echo -n $recipient |
+				sed 's/@.\+$/_/';
+				date +%Y%m%d_%H%M%S
+			)
+
 			$editor txt/tmp.txt
 			gpg \
 				--trust-model always \
@@ -285,41 +331,35 @@ function encryptMsg() {
 				--recipient $recipient \
 				txt/tmp.txt
 
-			if [ $? -eq 0 ]; then
-				recipientFormat=$(
-					echo -n 'msg_for_';
-					echo -n $recipient |
-					sed 's/@.\+$/_/';
-					date +%Y%m%d_%H%M%S
-				)
+			returnText \
+				"Message encrypted for " \
+				"${bs}" \
+				"${recipient}" \
+				"${be}" \
+				"\n" \
+				"to" \
+				"${gpgDir}" \
+				"/asc/" \
+				"${bs}" \
+				"${recipientFormat}" \
+				".asc" \
+				"${be}" \
+				" !"
 
-				mv txt/tmp.txt.asc asc/$recipientFormat.asc
-				rm txt/tmp.txt
+			mv txt/tmp.txt.asc asc/$recipientFormat.asc
+			rm txt/tmp.txt
 
-				echo -e "\n${green}\
-					Message encrypted for \
-					${bs}${recipient}${be}\nto \
-					$gpgDir/asc/${bs}$recipientFormat.asc\
-					${be} !${end}"
-
-				# Would you like to sign it ?
-			else
-				echo -e "\n${red}\
-					Warning: An error occured. \
-					Please refer to the gpg error log..\
-					${end}"
-			fi
 		fi
 
 	fi
 
-	echo 'RELOADAGENT' | gpg-connect-agent
-	toMenu
 }
 
 function decryptMsg() {
+
 	cd $gpgDir
-	messages=$(ls asc/ | grep '^msg' | head -n99)
+	messages=$(ls -1 asc/ | grep '^msg')
+
 	echo "Please select a message to decrypt : "
 	toDecryptMsg=$(echo -e "$messages" | $fzf)
 
@@ -329,29 +369,31 @@ function decryptMsg() {
 			--output txt/$toDecryptMsg.txt \
 			--decrypt asc/$toDecryptMsg
 
-		if [ $? -eq 0 ]; then
-			echo -e "\n${green}\
-				Message successfully decrypted to \
-				$gpgDir/txt/${bs}$toDecryptMsg.txt\
-				${be} !${end}"
-			echo -e "\nWould you like to see the message now ?\n"
+		returnText \
+			"Message successfully decrypted to" \
+			"\n" \
+			"${gpgDir}" \
+			"/txt/" \
+			"${bs}" \
+			"${toDecryptMsg}" \
+			".txt" \
+			"${be}" \
+			" !" \
+			"${end}" \
+			"\n" \
+			"Would you like to open the message now ?" \
+			"\n"
 
-			answerMsg=$(echo -e '[Y] Yes\n[N] No' | $fzf)
+		# DANGER ! (no Try)
+		answerMsg=$(echo -e '[Y] Yes\n[N] No' | $fzf)
 
-			if [[ $answerMsg == "[Y] Yes" ]]; then
-				$editor txt/$toDecryptMsg.txt
-			fi
-		else
-			echo -e "\n${red}\
-				Warning: An error occured. \
-				Please refer to the gpg error log..\
-				${end}"
+		if [[ $answerMsg == "[Y] Yes" ]]; then
+			$editor txt/$toDecryptMsg.txt
 		fi
+
 
 	fi
 
-	echo 'RELOADAGENT' | gpg-connect-agent
-	toMenu
 }
 
 function exportPubKey() {
@@ -367,21 +409,17 @@ function exportPubKey() {
 
 		gpg -ao pub/${pubFormat} --export ${public}
 
-		if [ $? -eq 0 ]; then
-			echo -e "\n${green}\
-				Public key successfully exported to \
-				$gpgDir/pub/${bs}${pubFormat}${be} !${end}"
-		else
-			echo -e "\n${red}Warning: \
-				An error occured. \
-				Please refer to the gpg error log.\
-				${end}"
-		fi
+		returnText \
+			"Message successfully exported to " \
+			"${gpgDir}" \
+			"/pub/" \
+			"${bs}" \
+			"${pubFormat}" \
+			"${be}" \
+			" !"
 
 	fi
 
-	echo RELOADAGENT | gpg-connect-agent
-	toMenu
 }
 
 function signFile() {
@@ -402,22 +440,19 @@ function signFile() {
 				grep $file |
 				tail -n1)
 
-		if [ $? -eq 0 ]; then
-			echo -e "\n${green}\
-				File successfully signed to \
-				$gpgDir/sig/${bs}${file}.sig\
-				${be} !${end}"
-		else
-			echo -e "\n${red}Warning: \
-				An error occured. \
-				Please refer to the gpg error log.\
-				${end}"
-		fi
+		returnText \
+			"Message successfully signed to" \
+			"\n" \
+			"${gpgDir}" \
+			"/sig/" \
+			"${bs}" \
+			"${file}" \
+			".sig" \
+			"${be}" \
+			" !"
 
 	fi
 
-	echo RELOADAGENT | gpg-connect-agent
-	toMenu
 }
 
 function verifyFile() {
@@ -432,9 +467,8 @@ function verifyFile() {
 
 		gpg --verify sig/${signature} ${fileSign}
 
-		if [ $? -ne 0 ]; then
-			exit 1
-		fi
+		returnText \
+			"Message successfully verified !"
 
 	fi
 
