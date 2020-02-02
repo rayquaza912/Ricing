@@ -191,16 +191,11 @@ function genKey() {
 
 function returnText() {
 
-	# Text block construction
-	text=(
-		# They all start with a newline
-		"\n"
-	)
-
 	if [ $? -ne 0 ]; then
 
 		# Generic error message
-		text+=(
+		text=(
+			"\n"
 			"${red}"
 			"Warning: "
 			"An error occured. "
@@ -211,7 +206,8 @@ function returnText() {
 	else
 
 		# Message on success
-		text+=(
+		text=(
+			"\n"
 			"${green}"
 			"$@"
 			"${end}"
@@ -222,12 +218,15 @@ function returnText() {
 	for i in "${text[@]}"; do
 		echo -ne "$i"
 	done
-	echo -e "\n"
+	echo
 
 	# Clear cached passphrases
-	echo 'RELOADAGENT' | gpg-connect-agent
+	echo 'RELOADAGENT' | gpg-connect-agent > /dev/null
 
-	toMenu
+	# Ask for opening decrypted message
+	if [ ! "$1" == "Message successfully decrypted to" ]; then
+		toMenu
+	fi
 
 }
 
@@ -331,6 +330,9 @@ function encryptMsg() {
 				--recipient $recipient \
 				txt/tmp.txt
 
+			mv txt/tmp.txt.asc asc/$recipientFormat.asc
+			rm txt/tmp.txt
+
 			returnText \
 				"Message encrypted for " \
 				"${bs}" \
@@ -346,8 +348,6 @@ function encryptMsg() {
 				"${be}" \
 				" !"
 
-			mv txt/tmp.txt.asc asc/$recipientFormat.asc
-			rm txt/tmp.txt
 
 		fi
 
@@ -380,16 +380,16 @@ function decryptMsg() {
 			"${be}" \
 			" !" \
 			"${end}" \
-			"\n" \
+			"\n\n" \
 			"Would you like to open the message now ?" \
-			"\n"
 
-		# DANGER ! (no Try)
+		# Open message then go to menu
 		answerMsg=$(echo -e '[Y] Yes\n[N] No' | $fzf)
 
-		if [[ $answerMsg == "[Y] Yes" ]]; then
+		if [ "$answerMsg" == "[Y] Yes" ]; then
 			$editor txt/$toDecryptMsg.txt
 		fi
+		toMenu
 
 
 	fi
@@ -410,7 +410,7 @@ function exportPubKey() {
 		gpg -ao pub/${pubFormat} --export ${public}
 
 		returnText \
-			"Message successfully exported to " \
+			"Public key successfully exported to " \
 			"${gpgDir}" \
 			"/pub/" \
 			"${bs}" \
@@ -441,7 +441,7 @@ function signFile() {
 				tail -n1)
 
 		returnText \
-			"Message successfully signed to" \
+			"Signature for message successfully written to" \
 			"\n" \
 			"${gpgDir}" \
 			"/sig/" \
@@ -472,8 +472,6 @@ function verifyFile() {
 
 	fi
 
-	echo RELOADAGENT | gpg-connect-agent
-	toMenu
 }
 
 checkDependencies
