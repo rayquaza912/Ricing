@@ -147,16 +147,27 @@ function askOption() {
 }
 
 function showKeys() {
+
+	# Interactive mode
 	if [ "$1" == "i" ]; then
 		echo
 	fi
 
-	gpg --list-keys |
+	# Show private keys (name) only
+	if [ "$1" == "private" ]; then
+		listKeys="--list-secret-keys"
+		index=2
+	else
+		listKeys="--list-keys"
+		index=1
+	fi
+
+	gpg $listKeys |
 		grep -E '^uid' |
 		sed 's/^.\+\] //' |
 		sed 's/>//' |
 		sed 's/ </;/' |
-		cut -d ';' -f 1- --output-delimiter=$'\t\t\t'
+		cut -d ';' -f ${index}- --output-delimiter=$'\t\t\t'
 
 	if [ "$1" == "i" ]; then
 		toMenu
@@ -255,11 +266,26 @@ function addPubKey() {
 }
 
 function delPubKey() {
+
 	echo "Please select a public key to delete : "
 	public=$(selectKey)
+
+	# Check for gpg --list-secret-keys
+	privateKeys=($(showKeys 'private'))
+	for email in "${privateKeys[@]}"; do
+
+		if [ "$email" == "$public" ]; then
+
+			# Selected key is a private one
+			gpg --delete-secret-key $public
+			break
+		fi
+	done
+
 	gpg --batch --yes --delete-key $public
 
-	if [ ! -z $public ]; then
+	# Check if deletion is successful
+	if [ -z $(showKeys | grep $public) ]; then
 
 		returnText \
 			"Public key " \
