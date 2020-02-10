@@ -1,5 +1,6 @@
 # GnuPG Messages Manager
 
+![alt text](https://github.com/rayquaza912/Ricing/raw/master/gpg-mm-3.gif "gpg-mm screen")
 
 #### Gpg-messages-manager is an interactive bash script that lets you manage messages and recipients for use with GnuPG. It is powered by [FZF](https://github.com/junegunn/fzf) and provide the following features :
 
