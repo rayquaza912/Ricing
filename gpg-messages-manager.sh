@@ -91,6 +91,11 @@ function setAddr() {
 	checkAddr
 }
 
+function quit() {
+	clear
+	exit 0
+}
+
 function showMenu() {
 	clear
 	echo "${bs}Welcome to GnuPG !${be}"
@@ -118,7 +123,7 @@ function askOption() {
 	done |
 	$fzf |
 	cut -d ' ' -f1 |
-	grep -oE '([0-9])'
+	grep -oE '([0-9]+)'
 	)
 
 	case $choice in
@@ -142,8 +147,11 @@ function askOption() {
 			signFile;;
 		9)
 			verifyFile;;
+		10)
+			quit;;
 	esac
 	clear
+	askOption
 }
 
 function showKeys() {
@@ -153,7 +161,7 @@ function showKeys() {
 		echo
 	fi
 
-	# Show private keys (name) only
+	# Show private keys (email) only
 	if [ "$1" == "private" ]; then
 		listKeys="--list-secret-keys"
 		index=2
@@ -162,6 +170,7 @@ function showKeys() {
 		index=1
 	fi
 
+	# Show keyring
 	gpg $listKeys |
 		grep -E '^uid' |
 		sed 's/^.\+\] //' |
@@ -270,7 +279,7 @@ function delPubKey() {
 	echo "Please select a public key to delete : "
 	public=$(selectKey)
 
-	# Check for gpg --list-secret-keys
+	# Check for gpg private keys
 	privateKeys=($(showKeys 'private'))
 	for email in "${privateKeys[@]}"; do
 
@@ -285,7 +294,7 @@ function delPubKey() {
 	gpg --batch --yes --delete-key $public
 
 	# Check if deletion is successful
-	if [ -z $(showKeys | grep $public) ]; then
+	if [ -z $(showKeys | grep "$public") ]; then
 
 		returnText \
 			"Public key " \
@@ -443,7 +452,6 @@ function exportPubKey() {
 			"${pubFormat}" \
 			"${be}" \
 			" !"
-
 	fi
 
 }
